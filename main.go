@@ -1,12 +1,16 @@
 package main
 
 import (
-  "go-cms/router"
+	"fmt"
+	"github.com/kythonlk/go-basic-backend/router/server"
 )
 
 func main() {
 
-  r := router.Router()
+	server := server.NewServer()
 
-	r.Run(":8000") // Listen and serve on 0.0.0.0:8000
+	err := server.ListenAndServe()
+	if err != nil {
+		panic(fmt.Sprintf("cannot start server: %s", err))
+	}
 }

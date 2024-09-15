@@ -2,11 +2,19 @@ package auth
 
 import (
 	"context"
-	"github.com/golang-jwt/jwt/v4"
 	"net/http"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v4"
+
 	"github.com/kythonlk/go-basic-backend/types"
+)
+
+type contextKey string
+
+const (
+	usernameKey contextKey = "username"
+	roleKey     contextKey = "role"
 )
 
 func RoleBasedMiddleware(role string, next http.HandlerFunc) http.HandlerFunc {
@@ -40,8 +48,8 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, "username", claims.Username)
-		ctx = context.WithValue(ctx, "role", claims.Role)
+		ctx = context.WithValue(ctx, usernameKey, claims.Username)
+		ctx = context.WithValue(ctx, roleKey, claims.Role)
 		next(w, r.WithContext(ctx))
 	}
 }

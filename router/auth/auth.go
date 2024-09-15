@@ -8,13 +8,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/kythonlk/go-basic-backend/types"
 	"golang.org/x/crypto/bcrypt"
 )
 
+var db *sql.DB
+
 // Login Handler
 func Login(w http.ResponseWriter, r *http.Request) {
-	var loginRequest LoginRequest
+	var loginRequest types.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -61,7 +65,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 // Register Handler
 func Register(w http.ResponseWriter, r *http.Request) {
-	var registerRequest RegisterRequest
+	var registerRequest types.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&registerRequest); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -103,8 +107,8 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := jwt.ParseWithClaims(refreshToken, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
+	token, err := jwt.ParseWithClaims(refreshToken, &types.Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return types.JwtKey, nil
 	})
 	if err != nil {
 		log.Printf("Error parsing refresh token: %v", err)
@@ -112,7 +116,7 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, ok := token.Claims.(*Claims)
+	claims, ok := token.Claims.(*types.Claims)
 	if !ok || !token.Valid {
 		http.Error(w, "Invalid refresh token", http.StatusUnauthorized)
 		return
@@ -166,4 +170,10 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"access_token": newAccessToken})
+}
+
+func SetupAuthRoutes(r chi.Router) {
+	r.Post("/login", Login)
+	r.Post("/register", Register)
+	r.Post("/refresh", RefreshToken)
 }

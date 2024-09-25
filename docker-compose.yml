@@ -1,0 +1,27 @@
+
+version: '3.8'
+services:
+  database:
+    container_name: postgresql
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: api
+    ports:
+      - '5442:5432'
+  mail:
+    container_name: mail
+    image: axllent/mailpit
+    restart: always
+    volumes:
+      - ./data:/data
+    ports:
+      - 8022:8025
+      - 1022:1025
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATA_FILE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1

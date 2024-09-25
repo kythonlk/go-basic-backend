@@ -1,59 +1,124 @@
-# go-cms
+# Go CockroachDB Backend Project Structure
 
-Creating a web application that simplifies backend development by allowing users to define API endpoints, request methods, and database schemas through a web interface is an ambitious and exciting project. Using Go for the backend, HTMX for dynamic HTML content without writing JavaScript, and SQLite as the database is a solid choice for building a lightweight, efficient, and easy-to-deploy application.
+## Technologies
+- **Backend**: Go, Chi
+- **Database**: CockroachDB, pgx
 
-### Project Structure
+## Database Models
 
-```plaintext
-Go-cms/
-├── router/
-│   └── router.go
-├── db/
-│   └── schema.go
-├── templates/
-│   ├── 404.html
-│   ├── home.html
-│   ├── about.html
-│   ├── login.html
-│   ├── test.html
-│   └── register.html
-├── go.mod
-├── go.sum
-├── main.go
-└── README.md
+### Users Table
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    is_verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    last_login TIMESTAMP,
+    reset_token TEXT,
+    reset_token_expiry TIMESTAMP,
+    mfa_secret TEXT,
+    role VARCHAR(50) DEFAULT 'user'
+);
 ```
 
-### Project Overview
+### JWT Token Management Table
+```sql
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    token TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    expires_at TIMESTAMP NOT NULL,
+    is_valid BOOLEAN DEFAULT TRUE,
+    user_agent TEXT,
+    ip_address VARCHAR(45)
+);
+```
 
-#### Technologies:
+### Roles and Permissions
+```sql
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
 
-- **Backend**: Go (Golang)
-- **Frontend**: HTML enhanced with HTMX for dynamic interactions
-- **Database**: SQLite
+CREATE TABLE user_roles (
+    user_id INT REFERENCES users(id),
+    role_id INT REFERENCES roles(id),
+    PRIMARY KEY(user_id, role_id)
+);
+```
 
-#### Core Features:
+### Audit Logs
+```sql
+CREATE TABLE audit_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    action VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    ip_address VARCHAR(45),
+    user_agent TEXT
+);
+```
 
-- GUI for creating and managing API endpoints.
-- Functionality to define request methods (GET, POST) for each endpoint.
-- Ability to specify database schema directly from the GUI.
-- Auto-generation of database tables based on the defined schema.
-- CRUD operations on the defined endpoints and associated database records.
+## JWT Authentication Workflow
+1. **User Registration**
+   - User submits email and password.
+   - Store hashed password and send verification email.
 
-### Suggested Architecture
+2. **User Login**
+   - Validate credentials and generate JWT access and refresh tokens.
+   - Store refresh token in the database.
 
-#### Backend (Go):
+3. **Token Flow**
+   - Use short-lived access tokens; refresh tokens for obtaining new access tokens.
 
-- **API Server**: Handles HTTP requests, serves the frontend, and interacts with the SQLite database.
-- **Dynamic Endpoint Creation**: Dynamically register user-defined endpoints and their methods at runtime.
-- **Database Management**: Interface for executing schema changes and performing CRUD operations based on user input.
+4. **Password Reset**
+   - Generate and email reset token; update password upon successful reset.
 
-#### Frontend (HTML + HTMX):
-
-- **Endpoint Management UI**: Allows users to create, modify, and delete API endpoints.
-- **Schema Definition UI**: Enables users to define and edit the schema (fields and data types) for each endpoint's database table.
-- **Dynamic Content Loading**: Use HTMX for partial page updates when creating or modifying endpoints and schemas, providing a smooth user experience without full page reloads.
-
-#### Database (SQLite):
-
-- **Schema Storage**: Stores the schema definitions for each user-created endpoint.
-- **Data Storage**: Maintains data for each endpoint according to its defined schema.
+## Project Structure
+```
+/root
+│
+├── /cmd                    # Main application and migration commands
+│   ├── /app                # Entry point for the application
+│   │   └── main.go        
+│   └── /migrate            # Database migration tool
+│       └── migrate.go      
+│
+├── /config                 # Configuration handling
+│   └── config.go           
+│
+├── /controllers            # HTTP request handlers
+│   ├── user_controller.go  
+│   ├── auth_controller.go  
+│   └── health_controller.go
+│
+├── /models                 # Database models
+│   ├── user.go             
+│   └── base.go             
+│
+├── /routes                 # API route definitions
+│   └── routes.go           
+│
+├── /services               # Business logic
+│   ├── auth_service.go     
+│   └── user_service.go     
+│
+├── /middleware             # Middleware for handling requests
+│   ├── auth_middleware.go  
+│   └── logging.go          
+│
+├── /utils                  # Utility functions
+│   ├── jwt.go              
+│   └── hash.go             
+│
+├── /migrations             # Database migration scripts
+│   └── 20230928_create_user_table.sql
+│
+├── go.mod                  # Go module dependencies
+├── go.sum                  # Go module checksums
+└── README.md               # Project documentation
+```

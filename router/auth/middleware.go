@@ -6,15 +6,12 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
-
 	"github.com/kythonlk/go-basic-backend/types"
 )
 
-type contextKey string
-
 const (
-	usernameKey contextKey = "username"
-	roleKey     contextKey = "role"
+	usernameKey string = "username"
+	roleKey     string = "role"
 )
 
 func RoleBasedMiddleware(role string, next http.HandlerFunc) http.HandlerFunc {

@@ -2,11 +2,10 @@ package db
 
 import (
 	"database/sql"
+	"log"
 )
 
-var db *sql.DB
-
-func setupTables() error {
+func setupTables(db *sql.DB) error {
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,6 +17,7 @@ func setupTables() error {
 	if err != nil {
 		return err
 	}
+	log.Println("Creating tokens table")
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS tokens (

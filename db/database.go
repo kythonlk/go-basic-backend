@@ -28,14 +28,22 @@ func New() Service {
 		return dbInstance
 	}
 
+	log.Println("Connecting to database: ", dburl)
 	db, err := sql.Open("sqlite3", dburl)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	log.Println("Creating tables")
 	dbInstance = &service{
 		db: db,
 	}
+
+	err = setupTables(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Tables created")
 	return dbInstance
 }
 

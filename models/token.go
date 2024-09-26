@@ -2,12 +2,12 @@ package models
 
 import (
 	"errors"
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"time"
+	"github.com/kythonlk/go-basic-backend/cmd"
 )
-
-var jwtSecret = []byte("SuperSecretKeyChangeMeLater")
 
 type Claims struct {
 	UserID uuid.UUID `json:"user_id"`
@@ -28,7 +28,7 @@ func GenerateToken(userID uuid.UUID, role string, expiresIn time.Duration) (stri
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString(cmd.JwtSecret)
 	if err != nil {
 		return "", err
 	}
@@ -41,7 +41,7 @@ func ValidateToken(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
+		return cmd.JwtSecret, nil
 	})
 
 	if err != nil || !token.Valid {

@@ -11,7 +11,6 @@ import (
 // DBPool is a globally accessible pool of database connections.
 var DBPool *pgxpool.Pool
 
-// ConnectDB establishes a connection to the database and sets up the connection pool.
 func ConnectDB(connectionString string) error {
 	var err error
 	DBPool, err = pgxpool.New(context.Background(), connectionString)
@@ -19,7 +18,6 @@ func ConnectDB(connectionString string) error {
 		return fmt.Errorf("unable to connect to database: %w", err)
 	}
 
-	// Check if the connection works
 	err = DBPool.Ping(context.Background())
 	if err != nil {
 		return fmt.Errorf("database ping failed: %w", err)

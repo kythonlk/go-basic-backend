@@ -6,28 +6,28 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kythonlk/go-basic-backend/models"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/kythonlk/go-basic-backend/utils"
 )
 
 // CreateUser inserts a new user into the database.
 func CreateUser(email, password string) (*models.User, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+  hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		return nil, fmt.Errorf("error hashing password: %w", err)
+		return nil, fmt.Errorf("error hashing password: %w", err) 
 	}
 
-	userID := uuid.New()
+	userID := uuid.New() 
 	query := `INSERT INTO users (id, email, password_hash) VALUES ($1, $2, $3)`
 
 	_, err = DBPool.Exec(context.Background(), query, userID, email, string(hashedPassword))
 	if err != nil {
-		return nil, fmt.Errorf("error creating user: %w", err)
+		return nil, fmt.Errorf("error creating user: %w", err) 
 	}
 
 	return &models.User{
 		ID:           userID,
 		Email:        email,
-		PasswordHash: string(hashedPassword),
+		PasswordHash: string(hashedPassword), 
 	}, nil
 }
 
